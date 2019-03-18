@@ -1,49 +1,49 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
 import { Link, Switch, Route, Redirect } from 'react-router-dom';
-import consolas from './consolas';
-import games from './games'
-import otros from './otros'
 import home from './home'
-import cart from './cart'
+import Cart from './cart'
 import Tarjeta from './tarjeta'
-import Search from './Search';
-import { todos } from './todos.json';
-
+import A1 from './A1';
+import A2 from './A2';
+import A3 from './A3';
+import firebase from "firebase"
 
 
 class App extends Component {
   constructor(props) {
     super(props)
     this.state = {
+      isSignedIn: false,
       search: "",
-      todo:todos,
-      arr:[]
+      todos: [],
     }
-
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
-  }
-
-  addItem(newItem){
-    this.setState({
-      arr : [...this.state.arr,newItem]
-    })
   }
 
   handleChange = (event) => {
     event.preventDefault();
     this.setState({
-      [event.target.name]: "/sear/"+event.target.value
+      [event.target.name]: "/sear/" + event.target.value
     })
   }
+
   handleSubmit = (event) => {
     alert(this.state.search);
-
     event.preventDefault();
   }
 
+  componentDidMount = () => {
+    firebase.auth().onAuthStateChanged(user => {
+      this.setState({ isSignedIn: !!user })
+    })
+    const nameRef = firebase.database().ref('todos')
+    nameRef.on('value', (snapshot) => {
+      var scores = snapshot.val()
+      this.setState({ todos: scores })
+    })
+  }
 
   render() {
     return (
@@ -73,28 +73,22 @@ class App extends Component {
             <li class="nav-item">
               <a class="nav-link" href="/cart" data-target="#myModal" data-toggle="modal">Sign in</a>
             </li>
-
           </ul>
         </nav>
-        {/*}<img src="https://www.freeiconspng.com/uploads/pikachu-png-icon-32.png" className="App-logo" alt="logo" />{*/}
         <home></home>
-
         <Switch>
-          <Route path="/consolas" component={consolas} />
-          <Route path="/games" component={games} />
-          <Route path="/otros" component={otros} />
+          <Route path="/consolas" component={A1} />
+          <Route path="/games" component={A2} />
+          <Route path="/otros" component={A3} />
           <Route path="/home" component={home} />
-          <Route path="/cart" component={cart} />
-          <Route path='/Search' render={(props) => (
-            <Search {...props} valo={this.state.search} />
-          )} />
+          <Route path="/cart" component={Cart} />
           <Route path="/sear/:ser" render={
-            ({match}) => {
-              const todos = this.state.todo.map((todos, i) => {
+            ({ match }) => {
+              const todos = this.state.todos.map((todos, i) => {
                 return (
                   <div >
                     {
-                      (todos.tipo.includes(match.params.ser)) || (todos.precio <=  match.params.ser) || (todos.nombre.includes(match.params.ser))?
+                      (todos.tipo.includes(match.params.ser)) || (todos.precio <= match.params.ser) || (todos.nombre.includes(match.params.ser)) ?
                         <div >
                           <div className="card mt-4">
                             <Tarjeta imagen={todos.imagen} precio={todos.precio} nombre={todos.nombre} descripcion={todos.descripcion} />
@@ -105,44 +99,21 @@ class App extends Component {
                   </div>
                 )
               })
-              return (<div className="container">
-                <div className="row-mt-4">
-                  {todos}
+              return (
+                <div>
+                  {this.state.isSignedIn ? (
+                    <div className="container">
+                      <div className="row-mt-4">
+                        {todos}
+                      </div>
+                    </div>
+                  ) : (<Cart />)}
                 </div>
-              </div>)
+              )
             }
           } />
-
         </Switch>
-        <footer className="foot">
-          <div className="container">
-            <div className="row">
-              <div className="col-md-4">
-                Game Door™
-              </div>
-              <div className="col-md-4">
-
-              </div>
-              <div className="col-md-4">
-                Contact us
-              </div>
-
-            </div>
-            <div className="row">
-              <div className="col-md-4">
-                TheGameDoor2000@gmail.com
-              </div>
-              <div className="col-md-4">
-
-              </div>
-              <div className="col-md-4">
-                +1 180-895-1523
-              </div>
-            </div>
-          </div>
-        </footer>
       </div>
-
     );
   }
 }
